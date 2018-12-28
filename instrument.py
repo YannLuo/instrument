@@ -1,19 +1,26 @@
 import ast
 import astor
 import os
-import sys
 import astunparse
 
 
-instrument_decorator = ast.Call(func=ast.Name(id='instrument_decorator', ctx=ast.Load()), args=[ast.Call(func=ast.Attribute(value=ast.Attribute(value=ast.Name(
-    id='os', ctx=ast.Load()), attr='path', ctx=ast.Load()), attr='realpath', ctx=ast.Load()), args=[ast.Name(id='__file__', ctx=ast.Load())], keywords=[])], keywords=[])
+def get_instrument_decorator(type_):
+    return ast.Call(func=ast.Name(id='instrument_decorator', ctx=ast.Load()), args=[ast.Call(func=ast.Attribute(value=ast.Attribute(value=ast.Name(id='os', ctx=ast.Load()), attr='path', ctx=ast.Load()), attr='realpath', ctx=ast.Load()), args=[ast.Name(id='__file__', ctx=ast.Load())], keywords=[]), ast.Str(s=type_)], keywords=[])
 
 
 class Instrumenter(ast.NodeTransformer):
     def visit_Module(self, node):
         for n in node.body:
             if isinstance(n, ast.FunctionDef):
-                n.decorator_list = [instrument_decorator] + n.decorator_list
+                n.decorator_list = [get_instrument_decorator(
+                    "function")] + n.decorator_list
+            elif isinstance(n, ast.ClassDef):
+                for subn in n.body:
+                    if isinstance(subn, ast.FunctionDef):
+                        args = [nn.arg for nn in subn.args.args]
+                        if 'self' in args:
+                            subn.decorator_list = [get_instrument_decorator(
+                                "method")] + subn.decorator_list
         node.body = [ast.Import(names=[ast.alias(name='os', asname=None)]), ast.ImportFrom(
             module='instrument_decorator', names=[ast.alias(name='instrument_decorator', asname=None)], level=0)] + node.body
 
