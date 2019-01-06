@@ -11,12 +11,12 @@ def get_instrument_decorator(type_):
 class Instrumenter(ast.NodeTransformer):
     def visit_Module(self, node):
         for n in node.body:
-            if isinstance(n, ast.FunctionDef):
+            if isinstance(n, [ast.FunctionDef, ast.AsyncFunctionDef]):
                 n.decorator_list = [get_instrument_decorator(
                     "function")] + n.decorator_list
             elif isinstance(n, ast.ClassDef):
                 for subn in n.body:
-                    if isinstance(subn, ast.FunctionDef):
+                    if isinstance(subn, [ast.FunctionDef, ast.AsyncFunctionDef]):
                         args = [nn.arg for nn in subn.args.args]
                         if 'self' in args:
                             subn.decorator_list = [get_instrument_decorator(
