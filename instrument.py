@@ -21,6 +21,9 @@ class Instrumenter(ast.NodeTransformer):
                         if 'self' in args:
                             subn.decorator_list = [get_instrument_decorator(
                                 "method")] + subn.decorator_list
+                        else:
+                            subn.decorator_list = [get_instrument_decorator(
+                                "function")] + subn.decorator_list
         node.body = [ast.Import(names=[ast.alias(name='os', asname=None)]), ast.ImportFrom(
             module='instrument_decorator', names=[ast.alias(name='instrument_decorator', asname=None)], level=0)] + node.body
 
